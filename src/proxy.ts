@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Single-user Basic Auth: username kuch bhi, password = APP_PASSWORD
 export function proxy(req: NextRequest) {
   const h = req.headers.get("authorization");
   if (h?.startsWith("Basic ")) {
@@ -13,4 +12,6 @@ export function proxy(req: NextRequest) {
   });
 }
 
-export const config = { matcher: ["/((?!_next|manifest.webmanifest|icon-).*)"] };
+export const config = {
+  matcher: ["/((?!_next|manifest.webmanifest|icon-).*)"],
+};
