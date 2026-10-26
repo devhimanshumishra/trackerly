@@ -179,7 +179,7 @@ export default function Page() {
     refreshInterval: 15000,
   }); // keeps phone and laptop in sync
   const [view, setView] = useState<View>("dashboard");
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0); // 0 at prerender; real time is set in the browser only
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -187,6 +187,7 @@ export default function Page() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
