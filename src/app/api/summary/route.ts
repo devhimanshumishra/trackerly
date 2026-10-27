@@ -6,37 +6,28 @@ import { dayKey } from "@/lib/day";
 export async function POST() {
   const s = await settings();
   const day = await getDay(dayKey(), s.template);
-  if (!day.sessions.length)
-    return NextResponse.json(
-      { error: "Log at least one session first." },
-      { status: 400 },
-    );
+  if (!day.sessions.length) return NextResponse.json({ error: "Log at least one session first." }, { status: 400 });
 
   const log = day.sessions
     .map(
       (x: any) =>
-        `- ${Math.round((+new Date(x.end) - +new Date(x.start)) / 60000)} min: ${x.note || "(no note)"}`,
+        `- [${x.subject || "General"}] ${Math.round((+new Date(x.end) - +new Date(x.start)) / 60000)} min: ${x.note || "(no note)"}`
     )
     .join("\n");
-  const list = day.checklist
-    .map((c: any) => `${c.done ? "[x]" : "[ ]"} ${c.title}`)
-    .join("\n");
+  const list = day.checklist.map((c: any) => `${c.done ? "[x]" : "[ ]"} ${c.title}`).join("\n");
 
   const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "openai/gpt-oss-20b",
+      model: "llama-3.3-70b-versatile",
       temperature: 0.4,
       max_tokens: 250,
       messages: [
         {
           role: "system",
           content:
-            "You write a short end-of-day summary of a developer's coding log in plain English. Max 4 lines: what got done, then one honest line on what to focus on tomorrow. No fluff, no emojis.",
+            "You write a short end-of-day summary of a developer's coding log in plain English. Max 4 lines: what got done per subject, then one honest line on what to focus on tomorrow. No fluff, no emojis.",
         },
         {
           role: "user",
@@ -47,11 +38,7 @@ export async function POST() {
   });
   const j: any = await r.json();
   const text = j.choices?.[0]?.message?.content;
-  if (!text)
-    return NextResponse.json(
-      { error: j.error?.message || "AI request failed." },
-      { status: 502 },
-    );
+  if (!text) return NextResponse.json({ error: j.error?.message || "AI request failed." }, { status: 502 });
   day.ai = text;
   await day.save();
   return NextResponse.json({ ai: text });

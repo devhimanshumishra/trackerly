@@ -3,13 +3,13 @@ import { getDay, settings } from "@/lib/state";
 import { dayKey } from "@/lib/day";
 
 export async function POST(req: Request) {
-  const { action, note = "" } = await req.json();
+  const { action, note = "", subject = "General" } = await req.json();
   const s = await settings();
-  if (action === "start" && !s.running) s.running = { start: new Date() };
+  if (action === "start" && !s.running) s.running = { start: new Date(), subject };
   if (action === "stop" && s.running) {
     const start = new Date(s.running.start);
     const day = await getDay(dayKey(start), s.template);
-    day.sessions.push({ start, end: new Date(), note });
+    day.sessions.push({ start, end: new Date(), note, subject: s.running.subject || "General" });
     await day.save();
     s.running = null;
   }
